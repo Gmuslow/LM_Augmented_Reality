@@ -1,0 +1,108 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+//Create an empty object in unity and attach to object
+//You also have to create a csv with 2 values per line
+//If you want to quickly make one, I have code to do so
+//Just ask and I'll send it
+
+public class Heatmap : MonoBehaviour
+{
+    GameObject HeatMapCube;
+
+    Renderer[,,] rend = new Renderer[5,5,5];
+    GameObject[,,] cube = new GameObject[5,5,5];
+    float[] floats = new float[50];
+
+    Gradient hmg = new Gradient();
+    GradientColorKey[] colors = new GradientColorKey[3];
+
+    float nextTime = 5f;
+    float update = 5;
+
+    string filename = //Insert file path to your csv file; An example: @"C:\Users\exampleUser\Documents\example.txt";
+
+    int ind = 0;
+    // Start is called before the first frame update
+    void Start()
+    {
+        HeatMapCube = new GameObject("HeatMapCube");
+
+        for (int i = 0; i < 5; i++)
+        {
+            for (int j = 0; j < 5; j++)
+            {
+                for (int k = 0; k < 5; k++)
+                {
+                    cube[i, j, k] = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    cube[i,j,k].transform.position = new Vector3(i,j, k);
+                    cube[i,j,k].transform.parent = HeatMapCube.gameObject.transform;
+                    rend[i,j,k] = cube[i,j,k].GetComponent<Renderer>();
+                }
+            }
+        }
+        char[] chars = { '\r', '\n' };
+        TextReader reader = File.OpenText(filename);
+        string line = reader.ReadToEnd();
+        string[] strings = line.Split(new string[] { "\r\n", "\r", "\n", "," }, StringSplitOptions.None);
+        for (int m = 0; m < 50; m++)
+        {
+            floats[m] = (float)Convert.ToDouble(strings[m]) / 100;
+        }
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        colors[0] = new GradientColorKey(Color.green, 0.0f);
+        colors[1] = new GradientColorKey(Color.yellow, 0.5f);
+        colors[2] = new GradientColorKey(Color.red, 1.0f);
+
+        var alphas = new GradientAlphaKey[3];
+        alphas[0] = new GradientAlphaKey(1.0f, 0.0f);
+        alphas[1] = new GradientAlphaKey(0.5f, 0.5f);
+        alphas[2] = new GradientAlphaKey(0.0f, 1.0f);
+
+        hmg.SetKeys(colors, alphas);
+
+        if (Time.time>update&&ind<50)
+        {
+            update += nextTime;
+
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    for (int k = 0; k < 5; k++)
+                    {
+                        if (i == j && i == k && (i==0 || i==4) )
+                        {
+                            if (i == 0)
+                            {
+                                rend[i, j, k].material.SetColor("_Color", hmg.Evaluate(floats[ind]));
+                            }
+                            else if (i == 4)
+                            {
+                                rend[i, j, k].material.SetColor("_Color", hmg.Evaluate(floats[ind+1]));
+                            }
+                        }
+                        else
+                        {
+                            var d1 = Mathf.Sqrt((Mathf.Pow(i,2))+(Mathf.Pow(j, 2)) +(Mathf.Pow(k, 2)));
+                            var d2 = Mathf.Sqrt((Mathf.Pow(i - 4, 2)) + (Mathf.Pow(j - 4, 2)) + (Mathf.Pow(k - 4, 2)));
+                            var a1 = (floats[ind] / d1) + (floats[ind+1] / d2);
+                            var a2 = (1 / d1) + (1 / d2);
+                            var result = a1 / a2;
+                            rend[i, j, k].material.SetColor("_Color", hmg.Evaluate(result));
+                        }
+                    }
+                }
+            }
+            ind += 2;
+        }
+    }
+}
