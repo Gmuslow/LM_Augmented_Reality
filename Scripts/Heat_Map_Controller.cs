@@ -37,6 +37,21 @@ public class Heat_Map_Controller : MonoBehaviour
             Debug.Log(indices);
         }
         DisplayHeatMapCube(new Vector3(-0.5f, -0.5f, -0.5f));
+
+        Vector3[] sensorPos = { new Vector3(1, 1, 1), new Vector3(0, 0, 2) };
+        float[] values = { 2f, 5f };
+
+
+        for (int j = 0; j < 4; j++)
+        {
+            for (int i = 0; i < 15; i++)
+            {
+
+                Test_IDW(5 * j, (int)Math.Pow(2, i));
+            }
+        }
+        
+
     }
 
     // Update is called once per frame
@@ -72,7 +87,7 @@ public class Heat_Map_Controller : MonoBehaviour
 
                         GameObject innerCube = Instantiate(innerCubePrefab, startVertex + offset, Quaternion.identity);
                         Renderer r = innerCube.GetComponent<Renderer>();
-                        r.material.SetColor("_Color", GetColor(i * 10 + j * 10 + k * 10));
+                        r.material.SetColor("_Color", GetColor(i * 10 + j*10 + k*10));
                     }
                 }
             }
@@ -81,6 +96,53 @@ public class Heat_Map_Controller : MonoBehaviour
 
     Color GetColor(float value)
     {
-        return new Color(value / 255, value / 255, value / 255, 1f);
+        return new Color((value % 255) / 255, 0f, 0f, 1f);
+    }
+
+    float IDW(Vector3 cellPos, Vector3[] sensorPositions, float[] sensorValues, float bounds = 100f, float power = 2)
+    {
+        float sumTop = 0;
+        float sumBottom = 0;
+        for (int i = 0; i < sensorPositions.Length; i++)
+        {
+            Vector3 diff = sensorPositions[i] - cellPos;
+            if (diff.magnitude < bounds) //if the sensor is within the bounds
+            {
+                sumTop += (float)(sensorValues[i] / (float)(Math.Pow(diff.magnitude, power)));
+                sumBottom += (float)(1f / (Math.Pow(diff.magnitude, power)));
+
+            }
+        }
+        if (sumBottom == 0)
+            return 0;
+        else
+            return sumTop / sumBottom;
+    }
+
+    void Test_IDW(int numSensors, int numVertices)
+    {
+        System.Random rnd = new System.Random();
+        
+        Vector3[] sensorPos = new Vector3[numSensors];
+        float[] sensorVals = new float[numSensors];
+        for (int i = 0; i < numSensors; i++)
+        {
+            Vector3 pos = new Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble());
+
+            sensorPos[i] = pos;
+            sensorVals[i] = (float)rnd.NextDouble();
+        }
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        
+        for (int j = 0; j < numVertices; j++)
+        {
+            Vector3 vertexPos = new Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble());
+            float val = IDW(vertexPos, sensorPos, sensorVals);
+        }
+
+        watch.Stop();
+        var elapsedMs = watch.ElapsedMilliseconds;
+        Debug.Log("Elapsed time for " + numSensors + " sensors and " + numVertices + " vertices:\t" + elapsedMs);
     }
 }
