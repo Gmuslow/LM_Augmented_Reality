@@ -2,6 +2,18 @@ import matplotlib.pyplot as plt
 import argparse
 import math
 import numpy as np
+from typing import List
+from matplotlib.patches import Circle
+
+"""The idea is, the larger the circle, the less likely it is to be accurate since
+the signals are more likely to be noisy, resulting in inaccurate RSSI values.
+A larger priority results in the coordinate more likely to be highlighted."""
+def PriorityFunction(rssi) -> float:
+    return 1.0 / (abs(rssi) - 40) 
+def GetColors(values) -> List[float]:
+    maxval = max(values)
+    print(maxval)
+    return [(value / maxval, value / maxval, value / maxval) for value in values]
 
 coord_filename = "current_coord.txt"
 current_coordinates = [] #the 2D current coordinate of the user.
@@ -44,17 +56,33 @@ possible_y = np.linspace(-maxDist, maxDist, maxPoints)
 for x in possible_x:
     for y in possible_y:
         candidate_points.append([x, y])
-print(candidate_points)
+
+
+
 
 """Loop through all points"""
+candidate_values = []
 for candidate in candidate_points:
+    candidate_value = 0.0
     for i in range(len(current_coordinates)):
-        vector = candidate - current_coordinates[i]
+        vector = [candidate[0] - current_coordinates[i][0], candidate[1] - current_coordinates[i][1]]
         mag = math.sqrt(math.pow(vector[0], 2) + math.pow(vector[1], 2)) #distance formula
         distance = abs(mag - radii[i]) #distance = distance from candidate point to the edge of the current circle.
+        candidate_value += PriorityFunction(rssi_values[i]) / distance
+    candidate_values.append(candidate_value)
 
 
-"""The idea is, the larger the circle, the less likely it is to be accurate since
-the signals are more likely to be noisy, resulting in inaccurate RSSI values."""
-def PriorityFunction(value):
-    
+colors = GetColors(candidate_values)
+print(colors)
+xcoords = [p[0] for p in candidate_points]
+ycoords = [p[1] for p in candidate_points]
+plt.scatter(xcoords, ycoords, c=colors)
+
+x_center = [c[0] for c in current_coordinates]
+y_center = [c[1] for c in current_coordinates]
+for i in range(len(current_coordinates)):
+    circle_center = (x_center[i], y_center[i])  # Define the center of the circle
+    circle_radius = radii[i]  # Define the radius of the circle
+    circle = Circle(circle_center, circle_radius, edgecolor='r', facecolor='none')
+    plt.gca().add_patch(circle)
+plt.show()
