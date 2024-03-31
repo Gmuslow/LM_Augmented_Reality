@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2599231252931226953}
   - component: {fileID: 7108494269456883682}
   m_Layer: 0
-  m_Name: Anchor
+  m_Name: relativeAnchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -62,7 +62,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6c6ab6d8d41e7954a99fc0441911e780, type: 2}
+  - {fileID: 2100000, guid: 9d79610ad86e34444a4c7eeb820f7df7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
