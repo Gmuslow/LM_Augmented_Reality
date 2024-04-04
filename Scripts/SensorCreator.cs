@@ -18,14 +18,14 @@ public class SensorCreator : MonoBehaviour
     string[] headerRow; 
     void Awake()
     {
-        grid = ReadCSVFile("scripts/sensor_values.csv");
+        grid = ReadCSVFile("Data/sensor_values.csv");
         headerRow = GetRow(grid, 4);
 
         numSensors = 0;
         bool readingSensorIDs = true;
         List<int> sensorIDs = new List<int>();
         List<Vector3> sensorTransforms = new List<Vector3>();
-        string[][] sensorPositionGrid = ReadCSVFile("scripts/sensor_positions.csv");
+        string[][] sensorPositionGrid = ReadCSVFile("Data/sensor_positions.csv");
         string[] xPositions = GetRow(sensorPositionGrid, 1);
         string[] yPositions = GetRow(sensorPositionGrid, 2);
         string[] zPositions = GetRow(sensorPositionGrid, 3);

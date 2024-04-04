@@ -3,7 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.IO;
+using UnityEngine.UI;
 
+// public class PwrValue_Controller : MonoBehaviour
+// {
+//     public Slider pwrSlider;
+
+//     float power = 2f;
+
+//     void Update()
+//     {
+//         power = pwrSlider.value;
+//     }
+// }
 public class Heat_Map_Controller : MonoBehaviour
 {
     public GameObject[] sensors;
@@ -13,6 +25,7 @@ public class Heat_Map_Controller : MonoBehaviour
     Vector3[] vertices;
     Vector3[] sensor_positions;
     float[] sensorVals;
+    float power=1;
     // Start is called before the first frame update
     void Start()
     {
@@ -40,7 +53,7 @@ public class Heat_Map_Controller : MonoBehaviour
             //Debug.Log(vertices[i]);
             Vector3 currentVertex = transform.TransformPoint(vertices[i]);
             //Debug.Log(currentVertex);
-            float val = IDW(currentVertex, sensor_positions, sensorVals, power:3);
+            float val = IDW(currentVertex, sensor_positions, sensorVals, power);
             //Debug.Log(val);
 
             colors[i] = GetColor(val);
@@ -54,7 +67,8 @@ public class Heat_Map_Controller : MonoBehaviour
     float restartTime = 0.05f;
     void Update()
     {
-        
+        float p = FindObjectOfType<Slider>().value;
+        Debug.Log(p);
         counter += Time.deltaTime;
         if(counter > restartTime)
         {
@@ -76,7 +90,7 @@ public class Heat_Map_Controller : MonoBehaviour
                 //Debug.Log(vertices[i]);
                 Vector3 currentVertex = transform.TransformPoint(vertices[i]);
                // Debug.Log(currentVertex);
-                float val = IDW(currentVertex, sensor_positions, sensorVals, power: 3);
+                float val = IDW(currentVertex, sensor_positions, sensorVals, power);
                // Debug.Log(val);
                 colors[i] = GetColor(val);
             }
@@ -136,8 +150,10 @@ public class Heat_Map_Controller : MonoBehaviour
         return c;
     }
 
-    float IDW(Vector3 vertexPos, Vector3[] sensorPositions, float[] sensorValues, float bounds = 100f, float power = 2)
+    float IDW(Vector3 vertexPos, Vector3[] sensorPositions, float[] sensorValues, float bounds = 100f, float power = 2f)
     {
+        
+
         float sumTop = 0;
         float sumBottom = 0;
         for (int i = 0; i < sensorPositions.Length; i++)

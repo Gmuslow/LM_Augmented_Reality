@@ -1,0 +1,47 @@
+using System;
+using System.Drawing;
+using System.IO;
+
+namespace DotDrawer
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            string data = "[100,200](255,0,0) [150,250](0,255,0) [200,300](0,0,255)";
+
+            // Split the data into individual dot specifications
+            string[] dotSpecs = data.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // Create a Bitmap to draw the dots on
+            Bitmap bitmap = new Bitmap(500, 500);
+            Graphics graphics = Graphics.FromImage(bitmap);
+            Pen pen = new Pen(Color.Black);
+
+            foreach (string dotSpec in dotSpecs)
+            {
+                // Extract the x, y coordinates and RGB values
+                string[] parts = dotSpec.Split(new char[] { '[', ']', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
+                int x = int.Parse(parts[0]);
+                int y = int.Parse(parts[1]);
+                string[] rgbValues = parts[2].Split(',');
+                int r = int.Parse(rgbValues[0]);
+                int g = int.Parse(rgbValues[1]);
+                int b = int.Parse(rgbValues[2]);
+
+                // Draw the dot at the specified coordinates with the specified color
+                Color dotColor = Color.FromArgb(r, g, b);
+                SolidBrush brush = new SolidBrush(dotColor);
+                graphics.FillEllipse(brush, x - 5, y - 5, 10, 10); // Adjust dot size as needed
+            }
+
+            // Save the image to a file
+            string outputPath = "dots_image.png";
+            bitmap.Save(outputPath);
+            Console.WriteLine($"Image saved to {outputPath}");
+
+            // Display the image (optional)
+            System.Diagnostics.Process.Start(outputPath);
+        }
+    }
+}

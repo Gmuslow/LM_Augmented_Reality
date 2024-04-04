@@ -1,0 +1,14 @@
+using Syste.Collection;
+using System.Collection.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class HeatMapButtonUI : MonoBehaviour
+{
+    [SerializeField] private string heatMap3DModel = "3D Model";
+
+    public void HeatMapButton()
+    {
+        SceneManager.LoadScene(heatMap3DModel)
+    }
+}
