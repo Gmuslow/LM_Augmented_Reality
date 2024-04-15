@@ -25,13 +25,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1484050438149499644}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.34295553, y: 1.0194854, z: 2.7107124}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6070534895874421026
 MonoBehaviour:
@@ -62,5 +62,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfead90b093c9554192af384958ed47c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  camera: {fileID: 0}
+  debug: 1
+  createDummyRSSI: 1
+  cam: {fileID: 0}
   anchorPrefab: {fileID: 381500825770894587, guid: 9809850f38c5829478349d623f58a09e, type: 3}
+  relativeAnchorPrefab: {fileID: 0}

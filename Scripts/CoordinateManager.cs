@@ -9,9 +9,17 @@ public class CoordinateManager : MonoBehaviour
 {
     // Start is called before the first frame update
     public bool debug = true;
+    public bool createDummyRSSI;
+    public bool clearRSSIEntries = false;
     public GameObject cam;
     public GameObject anchorPrefab, relativeAnchorPrefab;
     public static Vector3 multilaterationStartPoint;
+
+    public static string filePath;
+    private void Awake()
+    {
+        filePath = Application.persistentDataPath + "/current_coord.txt";
+    }
     void Start()
     {
         multilaterationStartPoint = new Vector3();
@@ -34,9 +42,14 @@ public class CoordinateManager : MonoBehaviour
         //initialize the starting point of multilateration
         multilaterationStartPoint = cam.transform.position;
 
+        if (clearRSSIEntries)
+        {
+            using (StreamWriter writer = new StreamWriter(filePath, false)) { writer.Write(""); }
+        }
+
         CreateNewSample(true);
     }
-
+    
     public void CreateNewSample(bool relative=false)
     {
         //init
@@ -45,7 +58,7 @@ public class CoordinateManager : MonoBehaviour
         Debug.Log("Current Position: " + currentPos);
         Debug.Log("Reference Point: " + multilaterationStartPoint);
         Debug.Log("Relative Position: " + relativePos);
-        string filePath = "Assets/Data/current_coord.txt";
+        
 
         try
         {
@@ -53,6 +66,10 @@ public class CoordinateManager : MonoBehaviour
             string fileContents = File.ReadAllText(filePath);
             string[] entries = fileContents.Split('$');
             string rssi = entries[entries.Length - 1];
+            if (createDummyRSSI)
+            {
+                rssi = Random.Range(-45, -70).ToString();
+            }
             string newEntry = "\n{" + relativePos + ";" + rssi.Trim() + "}$\n";
 
             string final = "";
@@ -72,6 +89,8 @@ public class CoordinateManager : MonoBehaviour
             Debug.LogError("Error reading or writing the file: " + e.Message);
         }
 
+        Multilateration m = FindObjectOfType<Multilateration>();
+        m.DisplayCandidatePoints(multilaterationStartPoint);
         CreateAnchor(relative);
     }
 
