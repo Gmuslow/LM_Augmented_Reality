@@ -25,7 +25,7 @@ public class Heat_Map_Controller : MonoBehaviour
     Vector3[] vertices;
     Vector3[] sensor_positions;
     float[] sensorVals;
-    float power=1;
+    float power= FindObjectOfType<Slider>().value;
     // Start is called before the first frame update
     void Start()
     {
@@ -67,8 +67,8 @@ public class Heat_Map_Controller : MonoBehaviour
     float restartTime = 0.05f;
     void Update()
     {
-        float p = FindObjectOfType<Slider>().value;
-        Debug.Log(p);
+       // float p = FindObjectOfType<Slider>().value;
+       // Debug.Log(p);
         counter += Time.deltaTime;
         if(counter > restartTime)
         {
@@ -150,7 +150,7 @@ public class Heat_Map_Controller : MonoBehaviour
         return c;
     }
 
-    float IDW(Vector3 vertexPos, Vector3[] sensorPositions, float[] sensorValues, float bounds = 100f, float power = 2f)
+    float IDW(Vector3 vertexPos, Vector3[] sensorPositions, float[] sensorValues,float power, float bounds = 100f)
     {
         
 
@@ -192,7 +192,7 @@ public class Heat_Map_Controller : MonoBehaviour
         for (int j = 0; j < numVertices; j++)
         {
             Vector3 vertexPos = new Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble());
-            float val = IDW(vertexPos, sensorPos, sensorVals);
+            float val = IDW(vertexPos, sensorPos, sensorVals, power);
         }
 
         watch.Stop();
