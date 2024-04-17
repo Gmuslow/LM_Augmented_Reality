@@ -63,7 +63,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debug: 1
-  createDummyRSSI: 1
+  clearRSSIEntries: 1
   cam: {fileID: 0}
   anchorPrefab: {fileID: 381500825770894587, guid: 9809850f38c5829478349d623f58a09e, type: 3}
-  relativeAnchorPrefab: {fileID: 0}
+  relativeAnchorPrefab: {fileID: 381500825770894587, guid: b976cc531341f5f41b726e0526b18c77, type: 3}

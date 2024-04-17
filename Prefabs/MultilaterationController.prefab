@@ -45,6 +45,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxDist: 5
-  maxPoints: 31
+  maxPoints: 21
   RSSISphere: {fileID: 2022026679017951948, guid: c1c461544343482458cd4b2e8097b9a2, type: 3}
   candidateObject: {fileID: 2630874199450483282, guid: 6791a8c24342bc1498501ae35a294df1, type: 3}
