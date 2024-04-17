@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using static Multilateration;
 
 public class Multilateration : MonoBehaviour
 {
@@ -11,9 +12,12 @@ public class Multilateration : MonoBehaviour
     public static bool showRSSISphere = false;
     public GameObject RSSISphere;
 
+    private List<Vector3> candidatePoints;
+    private List<GameObject> candidateObjects;
+    static List<GameObject> rssiSpheres;
     void Start()
     {
-        
+        rssiSpheres = new List<GameObject>();
     }
 
     // Update is called once per frame
@@ -21,14 +25,19 @@ public class Multilateration : MonoBehaviour
     {
 
     }
+
+    //toggle showing RSSI spheres
     public static void toggle()
     {
+        
         showRSSISphere = !showRSSISphere;
-        RSSISphere[] spheres = FindObjectsOfType<RSSISphere>();
-        foreach (RSSISphere sp in spheres)
+        
+        foreach (GameObject sp in rssiSpheres)
         {
-            sp.gameObject.SetActive(showRSSISphere);
+            sp.SetActive(showRSSISphere);
         }
+
+        Debug.Log("Showing RSSI spheres: " + showRSSISphere);
     }
 
     public class Candidate
@@ -42,7 +51,7 @@ public class Multilateration : MonoBehaviour
         }
     }
 
-
+    //Algorithm to perform multilateration
     public List<Candidate> PerformMultilateration()
     {
         string coord_filename = CoordinateManager.filePath;
@@ -57,7 +66,7 @@ public class Multilateration : MonoBehaviour
                 string entry = lines[i].Replace("{", "").Replace("}", "").Trim();
                 int RSSI = int.Parse(entry.Split(";")[1]);
                 string coord = entry.Split(";")[0].Replace("(", "").Replace(")", "");
-                Debug.Log("coord" + coord);
+                //Debug.Log("coord" + coord);
                 float x = float.Parse(coord.Split(",")[0]);
                 float y = float.Parse(coord.Split(",")[1]);
                 float z = float.Parse(coord.Split(",")[2]);
@@ -73,7 +82,7 @@ public class Multilateration : MonoBehaviour
             radii.Add(RSSIToMeters(rssi));
         }
 
-        List<Vector3> candidatePoints = CreateCandidatePoints();
+        ;
         List<Candidate> candidates = new List<Candidate>();
         foreach (Vector3 candidatePoint in candidatePoints)
         {
@@ -90,21 +99,15 @@ public class Multilateration : MonoBehaviour
             candidates.Add(new Candidate(candidate_value, candidatePoint));
         }
 
-        if (showRSSISphere)
-        {
-            RSSISphere[] rssiSpheres = FindObjectsOfType<RSSISphere>();
-            foreach (RSSISphere rSSISphere in rssiSpheres) //destroy all old rssiSpheres
-            {
-                Destroy(rSSISphere.gameObject);
-            }
+        //handle RSSI spheres for debugging
+        int index = current_coordinates.Count - 1;
+        GameObject g = Instantiate(RSSISphere, current_coordinates[index] + CoordinateManager.multilaterationStartPoint, Quaternion.identity);
+        Vector3 scale = new Vector3(2f * radii[index], 2f * radii[index], 2f * radii[index]);
 
-            for (int i = 0; i < radii.Count; i++)
-            {
-                Vector3 scale = new Vector3(2f * radii[i], 2f * radii[i], 2f * radii[i]);
-                GameObject g = Instantiate(RSSISphere, current_coordinates[i] + CoordinateManager.multilaterationStartPoint, Quaternion.identity);
-                g.transform.localScale = scale;
-            }
-        }
+        g.transform.localScale = scale;
+        g.SetActive(showRSSISphere);
+        rssiSpheres.Add(g);
+            
         return candidates;
     }
 
@@ -119,7 +122,7 @@ public class Multilateration : MonoBehaviour
 
     public List<Vector3> CreateCandidatePoints()
     {
-        List<Vector3> candidatePoints = new List<Vector3>();
+        List<Vector3> candidatePoints1 = new List<Vector3>();
         float inc = maxDist * 2f / maxPoints;
         for (int i = 0; i < maxPoints; i++)
         {
@@ -127,11 +130,11 @@ public class Multilateration : MonoBehaviour
             {
                 for (int k = 0; k < maxPoints; k++)
                 {
-                    candidatePoints.Add(new Vector3(i * inc - maxDist, j * inc - maxDist, k * inc - maxDist));
+                    candidatePoints1.Add(new Vector3(i * inc - maxDist, j * inc - maxDist, k * inc - maxDist));
                 }
             }
         }
-        return candidatePoints;
+        return candidatePoints1;
     }
 
     public float PriorityFunction(int rssi)
@@ -142,14 +145,10 @@ public class Multilateration : MonoBehaviour
 
     public GameObject candidateObject;
     
+
+    //performs multilateration based upon coordinate file and then displays candidate matrix
     public void DisplayCandidatePoints(Vector3 relativeTo)
     {
-
-        CandidateController[] prevCandidates = FindObjectsOfType<CandidateController>(); //Destroy all old candidates
-        foreach (CandidateController candidateController in prevCandidates)
-        {
-            Destroy(candidateController.gameObject);
-        }
 
         List<Candidate> candidates = PerformMultilateration();
         float max = 0f;
@@ -161,31 +160,58 @@ public class Multilateration : MonoBehaviour
             }
         }
 
-        foreach (Candidate candidate in candidates)
+        for (int i = 0; i < candidates.Count; i++)
         {
-            float alpha = candidate.Value / max;
-            if (alpha < 0.3)
+            float alpha = candidates[i].Value / max;
+            if (alpha < 0.4)
             {
-                continue;
+                candidateObjects[i].SetActive(false);
             }
-            GameObject g = Instantiate(candidateObject, candidate.Position + relativeTo, Quaternion.identity);
-            Renderer rend = g.GetComponent<Renderer>();
+            else
+            {
+                candidateObjects[i].SetActive(true);
+            }
+            
+
+
+            //Renderer rend = g.GetComponent<Renderer>();
 
             // Create a new material instance based on the object's material
-            Material material = new Material(rend.material);
+            //Material material = new Material(rend.material);
 
             // Set the alpha value of the material's color
-            Color color = material.color;
+            //Color color = material.color;
             //new Color(1 - alpha, 1 - alpha, 1 - alpha);
             
-            color.a = alpha; //set the alpha to some function of the candidate value (TODO<------------)
-            material.color = color;
+            //color.a = alpha; //set the alpha to some function of the candidate value (TODO<------------)
+            //material.color = color;
 
 
             // Assign the modified material to the object
-            rend.material = material;
+            //rend.material = material;
             
         }
+    }
+
+    //should only be called on init or restart
+    public void InstantiateCandidates(Vector3 relativeTo)
+    {
+        candidatePoints = CreateCandidatePoints();
+        if (candidateObjects != null)
+        {
+            foreach (GameObject candidateController in candidateObjects)
+            {
+                Destroy(candidateController);
+            }
+        }
+        candidateObjects = new List<GameObject>();
+        foreach (Vector3 candidate in candidatePoints)
+        {
+            GameObject g = Instantiate(candidateObject, candidate + relativeTo, Quaternion.identity);
+            g.SetActive(false);
+            candidateObjects.Add(g);
+        }
+        
     }
 
 }

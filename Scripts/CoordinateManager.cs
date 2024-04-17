@@ -9,16 +9,18 @@ public class CoordinateManager : MonoBehaviour
 {
     // Start is called before the first frame update
     public bool debug = true;
-    public bool createDummyRSSI;
     public bool clearRSSIEntries = false;
     public GameObject cam;
     public GameObject anchorPrefab, relativeAnchorPrefab;
     public static Vector3 multilaterationStartPoint;
+    public static bool sampling = false;
 
     public static string filePath;
+    private Multilateration mul;
     private void Awake()
     {
         filePath = Application.persistentDataPath + "/current_coord.txt";
+        mul = FindObjectOfType<Multilateration>();
     }
     void Start()
     {
@@ -30,8 +32,11 @@ public class CoordinateManager : MonoBehaviour
     {
 
     }
+
+    //Clears previous measurements and destroys all previous anchor points
     public void StartMultilateration()
     {
+        Debug.Log("Starting Multilateration...");
         //Get rid of all sampled points to restart
         ARAnchor[] anchorScripts = FindObjectsOfType<ARAnchor>();
         foreach (ARAnchor anchorScript in anchorScripts)
@@ -47,17 +52,32 @@ public class CoordinateManager : MonoBehaviour
             using (StreamWriter writer = new StreamWriter(filePath, false)) { writer.Write(""); }
         }
 
-        CreateNewSample(true);
+        sampling = true;
+        CreateAnchor(true);
+
+        mul.InstantiateCandidates(multilaterationStartPoint);
+        //CreateNewSample(true);
+    }
+
+
+
+    public void StartStopSampling()
+    {
+        sampling = !sampling;
     }
     
-    public void CreateNewSample(bool relative=false)
+
+    //Creates a new anchor point relative to the starting point of multilateration
+    //Creates a new entry in the coordinate file.
+    //Calls multilateration script 
+    public void CreateNewSample(bool relative=false, bool dummyRSSI = false)
     {
         //init
         Vector3 currentPos = cam.transform.position;
         Vector3 relativePos = multilaterationStartPoint - currentPos;
-        Debug.Log("Current Position: " + currentPos);
-        Debug.Log("Reference Point: " + multilaterationStartPoint);
-        Debug.Log("Relative Position: " + relativePos);
+        //Debug.Log("Current Position: " + currentPos);
+        //Debug.Log("Reference Point: " + multilaterationStartPoint);
+        //Debug.Log("Relative Position: " + relativePos);
         
 
         try
@@ -65,10 +85,12 @@ public class CoordinateManager : MonoBehaviour
             //coordinate file processing
             string fileContents = File.ReadAllText(filePath);
             string[] entries = fileContents.Split('$');
-            string rssi = entries[entries.Length - 1];
-            if (createDummyRSSI)
+            string rssi = ConnectBluetooth.HexStringToSignedByte(ConnectBluetooth.rssiValue).ToString();
+            //Debug.Log("Received rssi: " + rssi);
+            if (dummyRSSI)
             {
                 rssi = Random.Range(-45, -70).ToString();
+                Debug.Log("Created Dummy RSSI: " + rssi);
             }
             string newEntry = "\n{" + relativePos + ";" + rssi.Trim() + "}$\n";
 
@@ -89,8 +111,8 @@ public class CoordinateManager : MonoBehaviour
             Debug.LogError("Error reading or writing the file: " + e.Message);
         }
 
-        Multilateration m = FindObjectOfType<Multilateration>();
-        m.DisplayCandidatePoints(multilaterationStartPoint);
+        
+        mul.DisplayCandidatePoints(multilaterationStartPoint);
         CreateAnchor(relative);
     }
 
@@ -111,5 +133,10 @@ public class CoordinateManager : MonoBehaviour
         {
             anchor.AddComponent<ARAnchor>();
         }
+    }
+
+    public void CreateDummySample()
+    {
+        CreateNewSample(dummyRSSI: true);
     }
 }
