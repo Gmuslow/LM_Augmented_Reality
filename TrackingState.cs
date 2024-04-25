@@ -1,24 +1,31 @@
-namespace UnityEngine.XR.ARSubsystems
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+namespace Microsoft.MixedReality.Toolkit
 {
     /// <summary>
-    /// Represents pose tracking quality.
-    /// Can apply to a device or trackables it is tracking in the environment.
+    /// The Tracking State defines how a device is currently being tracked.
+    /// This enables developers to be able to handle non-tracked situations and react accordingly.
     /// </summary>
+    /// <remarks>
+    /// Tracking is being defined as receiving sensor (positional and/or rotational) data from the device.
+    /// </remarks>
     public enum TrackingState
     {
         /// <summary>
-        /// Not tracking.
+        /// The device does not support tracking (ex: a traditional game controller).
         /// </summary>
-        None,
-
+        NotApplicable = 0,
         /// <summary>
-        /// Some tracking information is available, but it is limited or of poor quality.
+        /// The device is not tracked.
         /// </summary>
-        Limited,
-
+        NotTracked,
         /// <summary>
-        /// Tracking is working normally.
+        /// The device is tracked (positionally and/or rotationally).
         /// </summary>
-        Tracking,
+        /// <remarks>
+        /// Some devices provide additional details regarding the accuracy of the tracking.
+        /// </remarks>
+        Tracked
     }
 }
