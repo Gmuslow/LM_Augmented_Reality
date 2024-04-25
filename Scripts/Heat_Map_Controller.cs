@@ -1,46 +1,38 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
-using System.IO;
 using UnityEngine.UI;
+using MixedReality.Toolkit.UX;
+using TMPro;
 
-// public class PwrValue_Controller : MonoBehaviour
-// {
-//     public Slider pwrSlider;
-
-//     float power = 2f;
-
-//     void Update()
-//     {
-//         power = pwrSlider.value;
-//     }
-// }
 public class Heat_Map_Controller : MonoBehaviour
 {
     public GameObject[] sensors;
     public float control_value = 100;
     public float control_deviance = 15f;
+
     Mesh mesh;
-    Vector3[] vertices;
-    Vector3[] sensor_positions;
+    UnityEngine.Vector3[] vertices; // Changed Vector3 to UnityEngine.Vector3
+    UnityEngine.Vector3[] sensor_positions; // Changed Vector3 to UnityEngine.Vector3
     float[] sensorVals;
-    float power= FindObjectOfType<Slider>().value;
+
+    public float power = 2f; // Default power value
+
+    public TextMeshProUGUI powerText; // Reference to the UI Text component
+
     // Start is called before the first frame update
     void Start()
     {
-
         mesh = GetComponent<MeshFilter>().mesh;
         vertices = mesh.vertices;
         //Debug.Log("Number of Vertices: " + vertices.Length);
 
-        sensor_positions = new Vector3[sensors.Length];
+        sensor_positions = new UnityEngine.Vector3[sensors.Length]; // Changed Vector3 to UnityEngine.Vector3
         sensorVals = new float[sensors.Length];
         for (int i = 0; i < sensors.Length; i++) //get sensor positions
         {
-            Vector3 pos = sensors[i].transform.position;
-
-            
+            UnityEngine.Vector3 pos = sensors[i].transform.position; // Changed Vector3 to UnityEngine.Vector3
 
             //Debug.Log("Sensor " + i + " Position: " + pos);
             sensor_positions[i] = pos;
@@ -51,7 +43,7 @@ public class Heat_Map_Controller : MonoBehaviour
         for (int i = 0;i < vertices.Length;i++) //loop through all vertices
         {
             //Debug.Log(vertices[i]);
-            Vector3 currentVertex = transform.TransformPoint(vertices[i]);
+            UnityEngine.Vector3 currentVertex = transform.TransformPoint(vertices[i]); // Changed Vector3 to UnityEngine.Vector3
             //Debug.Log(currentVertex);
             float val = IDW(currentVertex, sensor_positions, sensorVals, power);
             //Debug.Log(val);
@@ -60,6 +52,8 @@ public class Heat_Map_Controller : MonoBehaviour
         }
         SetVertexColors(colors);
 
+        UpdateHeatMap();
+
     }
 
     // Update is called once per frame
@@ -67,16 +61,15 @@ public class Heat_Map_Controller : MonoBehaviour
     float restartTime = 0.05f;
     void Update()
     {
-       // float p = FindObjectOfType<Slider>().value;
-       // Debug.Log(p);
+        UpdateHeatMap();
+
+     
         counter += Time.deltaTime;
         if(counter > restartTime)
         {
             for (int i = 0; i < sensors.Length; i++) //get sensor positions and values
             {
-                Vector3 pos = sensors[i].transform.position;
-
-
+                UnityEngine.Vector3 pos = sensors[i].transform.position; // Changed Vector3 to UnityEngine.Vector3
 
                 //Debug.Log("Sensor " + i + " Position: " + pos);
                 sensor_positions[i] = pos;
@@ -88,7 +81,7 @@ public class Heat_Map_Controller : MonoBehaviour
             for (int i = 0; i < vertices.Length; i++) //loop through all vertices
             {
                 //Debug.Log(vertices[i]);
-                Vector3 currentVertex = transform.TransformPoint(vertices[i]);
+                UnityEngine.Vector3 currentVertex = transform.TransformPoint(vertices[i]); // Changed Vector3 to UnityEngine.Vector3
                // Debug.Log(currentVertex);
                 float val = IDW(currentVertex, sensor_positions, sensorVals, power);
                // Debug.Log(val);
@@ -100,6 +93,51 @@ public class Heat_Map_Controller : MonoBehaviour
         
     }
 
+    public void UpdateHeatMap(){
+
+        Color[] colors = new Color[vertices.Length];
+        for (int i = 0; i < vertices.Length; i++)
+        {
+           UnityEngine.Vector3 currentVertex = transform.TransformPoint(vertices[i]); // Changed Vector3 to UnityEngine.Vector3
+            float val = IDW(currentVertex, sensor_positions, sensorVals, power);
+            colors[i] = GetColor(val);
+        }
+        SetVertexColors(colors);
+    }
+
+    // Function to increase the power value
+    public void IncreasePower()
+    {
+        if (power < 5) // Check if power is less than the max limit
+        {
+            power += 1; // Increase power by 1
+            UpdateHeatMap(); // Update the heat map with the new power value
+            UpdatePowerText();
+        }
+    }
+
+    // Function to decrease the power value
+    public void DecreasePower()
+    {
+        if (power > 0) // Check if power is greater than the min limit
+        {
+            power -= 1; // Decrease power by 1
+            UpdateHeatMap(); // Update the heat map with the new power value
+            UpdatePowerText();
+        }
+    }
+
+     void UpdatePowerText()
+    {
+        if (powerText != null)
+        {
+            powerText.text = "Power: " + power.ToString(); // Update the text content with the current power value
+        }
+        else
+        {
+            Debug.LogError("Power Text reference is not set.");
+        }
+    }
 
     void SetVertexColors(Color[] vertexColors)
     {
@@ -150,7 +188,7 @@ public class Heat_Map_Controller : MonoBehaviour
         return c;
     }
 
-    float IDW(Vector3 vertexPos, Vector3[] sensorPositions, float[] sensorValues,float power, float bounds = 100f)
+    float IDW(UnityEngine.Vector3 vertexPos, UnityEngine.Vector3[] sensorPositions, float[] sensorValues, float bounds = 100f, float power = 2f)
     {
         
 
@@ -158,7 +196,7 @@ public class Heat_Map_Controller : MonoBehaviour
         float sumBottom = 0;
         for (int i = 0; i < sensorPositions.Length; i++)
         {
-            Vector3 diff = sensorPositions[i] - vertexPos;
+            UnityEngine.Vector3 diff = sensorPositions[i] - vertexPos;
             if (diff.magnitude < bounds) //if the sensor is within the bounds
             {
                 sumTop += (float)(sensorValues[i] / (float)(Math.Pow(diff.magnitude, power)));
@@ -177,11 +215,11 @@ public class Heat_Map_Controller : MonoBehaviour
     {
         System.Random rnd = new System.Random();
 
-        Vector3[] sensorPos = new Vector3[numSensors];
+        UnityEngine.Vector3[] sensorPos = new UnityEngine.Vector3[numSensors]; // Changed Vector3 to UnityEngine.Vector3
         float[] sensorVals = new float[numSensors];
         for (int i = 0; i < numSensors; i++)
         {
-            Vector3 pos = new Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble());
+            UnityEngine.Vector3 pos = new UnityEngine.Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble()); // Changed Vector3 to UnityEngine.Vector3
 
             sensorPos[i] = pos;
             sensorVals[i] = (float)rnd.NextDouble();
@@ -191,7 +229,7 @@ public class Heat_Map_Controller : MonoBehaviour
 
         for (int j = 0; j < numVertices; j++)
         {
-            Vector3 vertexPos = new Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble());
+            UnityEngine.Vector3 vertexPos = new UnityEngine.Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble()); // Changed Vector3 to UnityEngine.Vector3
             float val = IDW(vertexPos, sensorPos, sensorVals, power);
         }
 
@@ -202,6 +240,3 @@ public class Heat_Map_Controller : MonoBehaviour
 
     
 }
-
-
-
