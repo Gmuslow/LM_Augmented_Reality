@@ -21,6 +21,10 @@ public class DebugPanel : MonoBehaviour
     public int targetAddressIndex = 0;
     List<byte[]> testTargets = new List<byte[]>();
     public bool showNewSamples;
+    public bool showDebugOutput = true;
+    public bool useDummyRSSI = false;
+    private int numDummyIterations = 8;
+    private int counter1;
 
     CoordinateManager cm;
     void Start()
@@ -30,6 +34,7 @@ public class DebugPanel : MonoBehaviour
         cb = FindObjectOfType<ConnectBluetooth>();
         cm = FindObjectOfType<CoordinateManager>();
         counter = updateTime;
+        counter1 = numDummyIterations;
 
         Application.logMessageReceived += Application_logMessageReceived;
         debugString = "--DEBUG PANEL--\n";
@@ -45,6 +50,7 @@ public class DebugPanel : MonoBehaviour
     {
         
         counter -= Time.deltaTime;
+        
         if (counter < 0)
         {
             if (ConnectBluetooth.changed)
@@ -52,13 +58,37 @@ public class DebugPanel : MonoBehaviour
                 
                 rssiTMesh.text = "RSSI: " + ConnectBluetooth.HexStringToSignedByte(ConnectBluetooth.rssiValue);
 
+
+                if (showDebugOutput)
+                {
+                    Debug.Log("Got new sample: " + rssiTMesh.text);
+                }
+
                 //call multilateration
                 if (CoordinateManager.sampling)
                 {
-                    Debug.Log("Got new sample: " + rssiTMesh.text);
-                    cm.CreateNewSample();
+                    
+                    if (ConnectBluetooth.HexStringToSignedByte(ConnectBluetooth.rssiValue) > -82)
+                    {
+                        cm.CreateNewSample(dummyRSSI: useDummyRSSI);
+                    }
+                    else
+                    {
+                        Debug.Log("Sample too low, ignoring.");
+                    }
                 }
                 ConnectBluetooth.changed = false;
+            }
+
+
+            counter1 -= 1;
+            if (useDummyRSSI && counter1 == 0)
+            {
+                if (CoordinateManager.sampling)
+                {
+                    cm.CreateNewSample(dummyRSSI: useDummyRSSI);
+                }
+                counter1 = numDummyIterations;
             }
             counter = updateTime;
         }

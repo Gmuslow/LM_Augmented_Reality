@@ -1,9 +1,13 @@
+using MixedReality.Toolkit;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.OpenXR.Input;
 using static Microsoft.MixedReality.GraphicsTools.MeshInstancer;
+using MixedReality.Toolkit.Subsystems;
+
 
 public class CoordinateManager : MonoBehaviour
 {
@@ -17,6 +21,8 @@ public class CoordinateManager : MonoBehaviour
 
     public static string filePath;
     private Multilateration mul;
+
+    public Vector3 handOffset = new Vector3(1.5f, -2, 1.5f);
     private void Awake()
     {
         filePath = Application.persistentDataPath + "/current_coord.txt";
@@ -25,6 +31,8 @@ public class CoordinateManager : MonoBehaviour
     void Start()
     {
         multilaterationStartPoint = new Vector3();
+        
+
     }
 
     // Update is called once per frame
@@ -55,6 +63,7 @@ public class CoordinateManager : MonoBehaviour
         sampling = true;
         CreateAnchor(true);
 
+        
         mul.InstantiateCandidates(multilaterationStartPoint);
         //CreateNewSample(true);
     }
@@ -73,13 +82,51 @@ public class CoordinateManager : MonoBehaviour
     public void CreateNewSample(bool relative=false, bool dummyRSSI = false)
     {
         //init
-        Vector3 currentPos = cam.transform.position;
-        Vector3 relativePos = multilaterationStartPoint - currentPos;
+        /*float theta;
+        
+        Debug.Log(360f - cam.transform.eulerAngles.y);
+        theta = (360f - cam.transform.eulerAngles.y) * Mathf.Deg2Rad;
+        Debug.Log("Cos tehta: " + Mathf.Cos(theta));
+        int xt = 1, yt = 1;
+        if (theta > 90f && theta <= 180f)
+        {
+            xt = -1;
+        }
+        if (theta > 180f && theta <= 270f)
+        {
+            xt = -1;
+            yt = -1;
+        }
+        if (theta > 270f && theta < 360f)
+        {
+            yt = -1;
+        }
+        Debug.Log(theta);
+        Vector3 handAngleRelativeOffset = new Vector3(handOffset.x * xt * Mathf.Pow( Mathf.Cos(theta), 2) + handOffset.z * yt * Mathf.Pow(Mathf.Sin(theta), 2)
+            , handOffset.y,
+            xt * handOffset.z * Mathf.Pow(Mathf.Cos(theta), 2) + handOffset.x * yt * Mathf.Pow( Mathf.Sin(theta), 2));
+        Debug.Log(handAngleRelativeOffset);*/
+
+
+
         //Debug.Log("Current Position: " + currentPos);
         //Debug.Log("Reference Point: " + multilaterationStartPoint);
         //Debug.Log("Relative Position: " + relativePos);
-        
+        Vector3 rightWristPos = Vector3.zero;
+        var aggregator = XRSubsystemHelpers.GetFirstRunningSubsystem<HandsAggregatorSubsystem>();
+        if (aggregator.TryGetJoint(TrackedHandJoint.Wrist, UnityEngine.XR.XRNode.RightHand, out HandJointPose pose))
+        {
+            rightWristPos = pose.Position;
+            Debug.Log("Right Wrist Pos:\t" + rightWristPos);
 
+        }
+        else
+        {
+            Debug.Log("Couldn't get wrist position");
+        }
+
+        Vector3 currentPos = cam.transform.position;
+        Vector3 relativePos = -(multilaterationStartPoint - rightWristPos);// + handAngleRelativeOffset;
         try
         {
             //coordinate file processing
@@ -89,7 +136,7 @@ public class CoordinateManager : MonoBehaviour
             //Debug.Log("Received rssi: " + rssi);
             if (dummyRSSI)
             {
-                rssi = Random.Range(-45, -70).ToString();
+                rssi = Random.Range(-60, -81).ToString();
                 Debug.Log("Created Dummy RSSI: " + rssi);
             }
             string newEntry = "\n{" + relativePos + ";" + rssi.Trim() + "}$\n";
@@ -112,12 +159,12 @@ public class CoordinateManager : MonoBehaviour
         }
 
         
-        mul.DisplayCandidatePoints(multilaterationStartPoint);
-        CreateAnchor(relative);
+        mul.DisplayCandidatePoints();
+        CreateAnchor(relative: relative, position: rightWristPos);
     }
 
     //Creates an anchor object in the worldspace
-    public void CreateAnchor(bool relative=false)
+    public void CreateAnchor(bool relative=false, Vector3 position = new Vector3())
     {
         Debug.Log("Creating Anchor...");
         GameObject anchor;
@@ -127,7 +174,7 @@ public class CoordinateManager : MonoBehaviour
         }
         else
         {
-            anchor = Instantiate(anchorPrefab, cam.transform.position, Quaternion.identity);
+            anchor = Instantiate(anchorPrefab, position, Quaternion.identity);
         }
         if (anchor.GetComponent<ARAnchor>() == null)
         {

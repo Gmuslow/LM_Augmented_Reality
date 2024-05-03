@@ -9,7 +9,9 @@ public class Multilateration : MonoBehaviour
     // Start is called before the first frame update
     public float maxDist = 5f;
     public int maxPoints = 11;
-    public static bool showRSSISphere = false;
+    public float minY = 0f;
+    public float maxY = 2f;
+    public static bool showRSSISphere = true;
     public GameObject RSSISphere;
 
     private List<Vector3> candidatePoints;
@@ -70,10 +72,19 @@ public class Multilateration : MonoBehaviour
                 float x = float.Parse(coord.Split(",")[0]);
                 float y = float.Parse(coord.Split(",")[1]);
                 float z = float.Parse(coord.Split(",")[2]);
-                current_coordinates.Add(new Vector3(x, y, z));
-                rssi_values.Add(RSSI);
+                if (RSSI > -81)
+                {
+                    current_coordinates.Add(new Vector3(x, y, z));
+                    rssi_values.Add(RSSI);
+                }
+                
                 
             }
+        }
+
+        if (rssi_values.Count == 0)
+        {
+            return null;
         }
 
         List<float> radii = new List<float>();
@@ -114,7 +125,7 @@ public class Multilateration : MonoBehaviour
     public float RSSIToMeters(int rssiValue)
     {
         float N = 4f;
-        float measuredPower = -40f;
+        float measuredPower = -83f;
         float exp = (measuredPower - (float)rssiValue) / (10f * N);
         float radius = Mathf.Pow(10, exp);
         return radius;
@@ -130,7 +141,10 @@ public class Multilateration : MonoBehaviour
             {
                 for (int k = 0; k < maxPoints; k++)
                 {
-                    candidatePoints1.Add(new Vector3(i * inc - maxDist, j * inc - maxDist, k * inc - maxDist));
+                    float yValue = j * inc - maxDist;
+
+                    if (yValue > minY &&  yValue < maxY)
+                        candidatePoints1.Add(new Vector3(i * inc - maxDist, yValue, k * inc - maxDist));
                 }
             }
         }
@@ -139,7 +153,12 @@ public class Multilateration : MonoBehaviour
 
     public float PriorityFunction(int rssi)
     {
-        return Mathf.Sqrt(Mathf.Abs(rssi) - 40);
+        if (rssi < -81)
+            return 999;
+        else
+            return 1;
+
+        //return Mathf.Sqrt(Mathf.Abs(rssi) - 75);
     }
 
 
@@ -147,10 +166,14 @@ public class Multilateration : MonoBehaviour
     
 
     //performs multilateration based upon coordinate file and then displays candidate matrix
-    public void DisplayCandidatePoints(Vector3 relativeTo)
+    public void DisplayCandidatePoints()
     {
 
         List<Candidate> candidates = PerformMultilateration();
+        if (candidates == null)
+        {
+            return;
+        }
         float max = 0f;
         foreach(Candidate candidate in candidates) //computing max real quick
         {
@@ -208,7 +231,7 @@ public class Multilateration : MonoBehaviour
         foreach (Vector3 candidate in candidatePoints)
         {
             GameObject g = Instantiate(candidateObject, candidate + relativeTo, Quaternion.identity);
-            g.SetActive(false);
+            g.SetActive(true);
             candidateObjects.Add(g);
         }
         
