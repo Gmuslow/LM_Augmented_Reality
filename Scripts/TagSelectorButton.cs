@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class TagSelectorButton : MonoBehaviour
 {
@@ -23,5 +24,10 @@ public class TagSelectorButton : MonoBehaviour
         ConnectBluetooth b = FindObjectOfType<ConnectBluetooth>();
         Debug.Log("Clicked: " + tagName);
         b.WriteToTargetAddress(macAddress);
+    }
+
+    public void SetName()
+    {
+        GetComponentInChildren<TextMeshProUGUI>().text = tagName;
     }
 }
